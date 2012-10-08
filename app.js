@@ -9,7 +9,7 @@ var express = require('express'),
 
 var app = express();
 
-app.configure(function(){
+app.configure(function() {
   app.set('port', process.env.PORT || 8888);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -21,7 +21,7 @@ app.configure(function(){
   app.use(express.static(path.join(__dirname,'public')));
 });
 
-app.configure('development', function(){
+app.configure('development', function() {
   app.use(express.errorHandler());
 });
 
@@ -44,42 +44,20 @@ function forEach (array, callback) {
   }
 }
 
-// listen for any messages from the client on the home page and broadcast them to all users.
 socket.sockets.on("connection", function( client ) {
-    // Push everybody who connects to this server to this array.
-    users.push(client);
-
-    // on the client, am emitting the coordinate of where the user started drawing
-    // therefore, take that coordinate and emit it to other clients.
-    client.on('begin', function(obj) {
-      forEach(users, function(user) {
-        if (user != client) {
-          user.emit('beginDrawingAt', { x: obj.x, y: obj.y });
-        }
-      });     
-    });
-    
-    // on the client, am emitting the coordinate of where the user has moved to
-    // therefore, take that coordinate and emit it to other clients.
-    client.on('drawing', function(obj) {
-      forEach(users, function(user) {
-        if (user != client) {
-          user.emit('drawTo', { x: obj.x, y: obj.y });
-        }
-      });
-    });
-
-  // When the user disconnects or closes the browser, then remove them from the list of
-  // connected users.
-   client.on('disconnect', function () {
-      forEach(users, function(user) {
-         if (user === client) {
-            users.splice(users.indexOf(user), 1);
-         }
-      });
-   });
+  // on the client, am emitting the coordinate of where the user started
+  // drawing take that broadcast it to other clients.
+  client.on('begin', function(obj) {
+    client.broadcast.emit('beginDrawingAt', { x: obj.x, y: obj.y });
+  });
+  
+  // on the client, am emitting the coordinate of where the user has moved to
+  // take that and broadcast it to other clients.
+  client.on('drawing', function(obj) {
+    client.broadcast.emit('drawTo', { x: obj.x, y: obj.y });
+  });
 })
 
-server.listen(app.get('port'), function(){
+server.listen(app.get('port'), function() {
   console.log("Express server listening on port " + app.get('port'));
 });
